@@ -3,40 +3,42 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class MAGICAL //MAGIC applied by lightprobe
+//TODO:
 //need a parent class (MAGIC: mapping approximation of global illumination compute)
 //alternative -> (MAGIC: mapping approximation of global illumination cache)
 //to derive other implementation like:
 //MAGIC HAT: by hemisperic atlas tiling
 //MAGIC TRICK: by tiled ray indirection as compressed kernel
 {
-	int size = 256; //8bit indexing limits //UV using 8bit channel to index
-    public int rayCounter = 0;
-    Vector4 Kernel;
+	int size = 256; //texture size, max = 256 //8bit indexing limits //UV using 8bit channel to index //allow to adress 65536 points
+	public int rayCounter = 0; //count rays for accumulation before swap
+	Vector4 Kernel;//ray direction + counter
 
     globalLights globalLights;
 
     public Shader GI;
     Material GIpass;
 
-    //BUFFER
-	RenderTexture displayBuffer;
-	RenderTexture accumulationBuffer;
+	//GI BUFFER
+	RenderTexture displayBuffer;//used to show GI
+	RenderTexture accumulationBuffer;//used to accumulate the rays
     RenderTexture swap;
     
+	//Direct light BUFFER
     public Shader direct;
     Material directPass;
 	RenderTexture directlight;
 
-    public  void SetGlobalLights(globalLights lights){
+    public  void SetGlobalLights (globalLights lights){
         globalLights = lights;
     }
-	private void initDirectLight(Mesh[] mesh, RenderTexture probes){
+	private void initDirectLight (Mesh[] mesh, RenderTexture probes){
         directPass = new Material(direct);
 		directPass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
         RenderSurface.setCanvas(directlight,size);
         RenderSurface.applyShader(mesh,directlight,directPass);
 	}
-    private void initGIBuffer(Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
+    private void initGIBuffer (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
         GIpass = new Material(GI);
         setGlobalLightsToGI();
         setSceneDataToGI(origin,probes);
@@ -47,19 +49,19 @@ public class MAGICAL //MAGIC applied by lightprobe
         RenderSurface.applyShader(mesh,displayBuffer,directPass);
         RenderSurface.applyShader(mesh,accumulationBuffer,directPass);
     }
-    public  void InitMAGICAL(Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
+    public  void InitMAGICAL (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
         Kernel = new Vector4();
 	    initDirectLight(mesh,probes);
 	    initGIBuffer(mesh,origin,probes,LMGB);
     }
  
-    public  void updateDirectLight(Mesh[] mesh){
+    public  void updateDirectLight (Mesh[] mesh){
         RenderSurface.applyShader(mesh,directlight,directPass);
     }
-    public  void updateGIBuffer(Mesh[] mesh){
-        const int numSamples = 64;
-		const float phi = 1.618033988f;
-		const float gAngle = phi * Mathf.PI * 2.0f;
+    public  void updateGIBuffer (Mesh[] mesh){
+	    const int numSamples = 64; //(number of rays)
+	    const float phi = 1.618033988f;//golden number
+	    const float gAngle = phi * Mathf.PI * 2.0f;//golden angle
 		Vector3 worldNormal = Vector3.up; 
         
         // for (int rayCounter = 0; rayCounter < numSamples; rayCounter++){
@@ -67,20 +69,22 @@ public class MAGICAL //MAGIC applied by lightprobe
         	float fiN = fi / numSamples;
         	float longitude = gAngle * fi;
         	float latitude = Mathf.Asin(fiN * 2.0f - 1.0f);
-                     
-        	Vector3 kernel = new Vector3(
+                 
+	    //hemisphere sampling
+	    Vector3 kernel = new Vector3(
         		Mathf.Cos(latitude) * Mathf.Cos(longitude),
         		Mathf.Cos(latitude) * Mathf.Sin(longitude),
         		Mathf.Sin(latitude)
-			);
+	    );
+			
             //send _Kernel.rgb to shader, pass .a = count 
             Kernel = new Vector4(kernel.x,kernel.y,kernel.z,rayCounter);
             GIpass.SetVector("_Kernel",Kernel);
             RenderSurface.applyShader(mesh,accumulationBuffer,GIpass);
 
-            rayCounter +=1;
+	    rayCounter +=1;//each update, generally each frame
             rayCounter %= numSamples;
-            if (rayCounter == 0){
+	    if (rayCounter == 0){//every modulo
                 //swap buffer
                 swap = displayBuffer;
                 displayBuffer = accumulationBuffer;
@@ -95,7 +99,7 @@ public class MAGICAL //MAGIC applied by lightprobe
         	// Debug.DrawRay(Vector3.zero,kernel*16,Color.red);
 			//traceResult += ConeTrace(voxelOrigin.xyz, kernel.xyz, worldNormal.xyz);
     }
-  
+	//RECAP from shader
             // sampler2D _Skybox;
             // float4    _MainLight;
             // float4    _Ambientsky;

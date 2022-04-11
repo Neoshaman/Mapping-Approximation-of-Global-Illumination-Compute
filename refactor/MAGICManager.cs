@@ -8,46 +8,44 @@ public partial class MAGICManager : MonoBehaviour//probably not a monobehaviavio
    	public shaderIndex shaders;
 	public GIScene[] scenes;
 
-   //update lights
-
-   //scene management // interface to derive? scriptable code?
+	//TODO:
+	//update lights
+    //scene management // interface to derive? scriptable code?
     //refresh
     //load/unload/create/save?
 
     globalLights setLight(){
         //set light direction for shader
         if (glight == null) glight.initNULL();
-        glight.main = FindObjectOfType<Light>();// should discriminate light in a function
+	    glight.main = FindObjectOfType<Light>();// should discriminate light in a function, test scene should only have 1 light
 		glight.directionalLight = -glight.main.transform.forward;
-
-        //default creation if null
         return glight;
     }
     
 //*************************************************************
-//move out should be done by general scene manager
+//TODO: move out should be done by general scene manager
     void Start(){
        foreach (var scene in scenes){
-	       //set position
+	       //TODO: set position
 	       scene.init(setLight(), shaders);
        }
     }
 
     void Update(){
-        //select which scene to refresh/init based on logic
+        //TODO: select which scene to refresh/init based on logic
         foreach (var scene in scenes){
-            scene.updateLight();//on light change refresh
+	        scene.updateLight();//TODO: when light change, refresh
 	        scene.updateGI();
-	        //eventually position
+	        //TODO: eventually position, for example circular grid of scene
         }
     }
 //*************************************************************
 
-
+//TODO: 
 //set up
-    //make sure all mesh in a scene don't overlap on lightmap
-    //Add mesh into the geometry array
-    //add light, skybox and set ambiant
+	//make sure all mesh in a scene don't overlap on lightmap (currently just loop them, test scene should have 1 mesh anyway)
+	//Add mesh into the geometry array (done)
+	//add light, skybox and set ambiant (in prtogress)
     //overide start and update for specific management?
 
 }

@@ -1,8 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MAGIC 
+public class MAGIC //inprogress
 //(MAGIC: mapping approximation of global illumination compute)
 //to derive other implementation like:
 //MAGICAL: lightprobe indirection cubmemap

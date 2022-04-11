@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LMGB
+public class LMGB //HOLD and initialize graphic data in a lightmap to compute light in shader
+//TODO:
 //probably need a parent class
 //(GIGB: global illumination graphic buffer)
 //to derive other GB like SMGB, VPMGB, SPMGB
@@ -17,19 +18,13 @@ public class LMGB
 		BakeShadowMasking;
     Shader[] shader;
 
-	//how about making a LMGBLayer class objects to put in array, encapsulate shader, texture, name
+	//TODO:how about making a LMGBLayer class objects to put in array, encapsulate shader, texture, name
 
     // public RenderTexture albedo			{ get => texture[0]; protected set => albedo		= value; }
     // public RenderTexture worldNormal	{ get => texture[1]; protected set => worldNormal	= value; }
     // public RenderTexture worldPosition	{ get => texture[2]; protected set => worldPosition	= value; }
     // public RenderTexture shadowMasking	{ get => texture[3]; protected set => shadowMasking	= value; }
 
-	// enum layer{
-	// 	albedo			= 0,
-	// 	worldNormal		= 1,
-	// 	worldPosition	= 2,
-	// 	shadowMask		= 3
-	// }
 	void setShader(){
 		shader = new Shader[4];
 

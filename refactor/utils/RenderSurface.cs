@@ -4,9 +4,10 @@ using UnityEngine;
 
 static class RenderSurface
 {
+	//low level graphic rendering utils 
 	public  static void initRender(RenderTexture RT, Material mat){
 		Graphics.SetRenderTarget(RT);
-		GL.Flush();
+		// GL.Flush();
 		GL.PushMatrix();
 		GL.LoadOrtho();
 		mat.SetPass(0);
