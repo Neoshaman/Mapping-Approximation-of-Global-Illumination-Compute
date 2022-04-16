@@ -25,9 +25,15 @@ public partial class MAGICManager : MonoBehaviour//probably not a monobehaviavio
 //*************************************************************
 //TODO: move out should be done by general scene manager
     void Start(){
-       foreach (var scene in scenes){
-	       //TODO: set position
-	       scene.init(setLight(), shaders);
+	    foreach (var scene in scenes){
+	    	Instantiate(scene.root, 
+		    	new Vector3(32,0,32),
+		    	//Vector3.zero,
+		    	Quaternion.Euler(-90,0,0)
+		    	//Quaternion.identity
+	    	);
+	    	//TODO: set position
+	    	scene.init(setLight(), shaders);
        }
     }
 

@@ -9,6 +9,7 @@ public class TextureGraphicBuffer//in progress
 {
 
 }
+//LMGB
 //SMGB: splat map GB
 //VPMGB: voxel proxy map GB
 //SPMGB: surface proxy map GB

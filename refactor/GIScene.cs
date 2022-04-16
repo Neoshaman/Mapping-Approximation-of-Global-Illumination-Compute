@@ -44,7 +44,7 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	    Vector3 origine = root.gameObject.GetComponent<Renderer>().bounds.min;
         geometry = new Mesh[1];
 	    geometry[0] = root.GetComponent<MeshFilter>().sharedMesh;
-        root.layer = 8;
+	    root.layer = LayerMask.NameToLayer("capture");
 	    
         shaderSetup(shader);
 
@@ -68,16 +68,16 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	        // Material CanvasFrame = root.GetComponent<MeshRenderer>().sharedMaterial;
 	        Material dmat  = new Material(shader.debugshader);
 	        // Material dmat  = new Material(shader.GILMLit);
-	        root.GetComponent<Renderer>().material = dmat;
+	        	root.GetComponent<Renderer>().material = dmat;
 	        // root.GetComponent<Renderer>().material = new Material(shader.GILMLit);
 	        // root.GetComponent<MeshRenderer>().material = new Material(shader.GILMLit);
 	        // dmat = root.GetComponent<Renderer>().material;// = new Material(shader.GILMLit);
 	        // Material dmat = root.GetComponent<MeshRenderer>().material;// = new Material(shader.GILMLit);
 	        // CanvasFrame = new Material(getshader.GILMLit);
 	        // CanvasFrame.shader = getshader.GILMLit;
-	        Debug.Log(root);
+	        //Debug.Log(root);
 	        debug = GameObject.CreatePrimitive(PrimitiveType.Quad);
-	        debug.GetComponent<Renderer>().material =  new Material(shader.debugshader);
+	    	debug.GetComponent<Renderer>().material = dmat;// new Material(shader.debugshader);
 	    	// RenderSurface.show(debug, GI.returnDisplay());
 
 	    //in theory show the GI texture buffer on the main mesh, which is to test by passing debug data such as bright red
@@ -106,9 +106,17 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	    GI.updateGIBuffer(geometry);
 	    if (GI.rayCounter == 0){//we accumulate one ray per frame, when all ray are accumulated one bounce of GI is done
 		    RenderSurface.show(root, GI.returnDisplay());// update the double buffering of the GI compute
+		    //Debug.Log(GI.returnDisplay());
 	    }
 	    //DEBUG: try to show the raw texture within a utils class into the debug quad,
 	    //to see if its accessible and properly rendered
-        RenderSurface.show(debug,UVprobe.atlas);
+	    //RenderSurface.show(debug,UVprobe.atlas);
+	    
+	    //RenderSurface.show(debug,GI.returnDisplay());
+	    //RenderSurface.show(debug,GI.returnAccum());
+	    RenderSurface.show(debug,GI.returnDirect());
+	    
+	    //RenderSurface.show(debug,GIbuffer.texture[3]);
+	    //Debug.Log(GIbuffer.texture[0]);
     }
 }

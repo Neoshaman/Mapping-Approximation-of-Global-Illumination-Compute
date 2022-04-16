@@ -1,4 +1,4 @@
-﻿Shader "MAGIC/CubeToAtlas"
+Shader "MAGIC/CubeToAtlas"
 {
      Properties
     {
@@ -44,6 +44,7 @@
             {
             	float2 g = input.uv - 0.5;
                 float3 normal = UnpackNormalFromOct(2*g);
+
                 return texCUBE(_Cube, normal);
             }
             ENDCG

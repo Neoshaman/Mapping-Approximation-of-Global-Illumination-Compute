@@ -168,6 +168,8 @@ Shader "MAGIC/BoxGI"
 			    //accumulation (accum + sample accum) //display materal must reconstruct RGB from chroma lum
                 irradiance += accum;
 			    //return 16bit encoding
+			    
+			    return fixed4(1,0,0,1);
                 return irradiance;
             }
             ENDCG

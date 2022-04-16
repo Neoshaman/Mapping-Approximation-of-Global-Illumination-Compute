@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56b7eb435b14cba4381e7319a5b9b6fc, type: 3}
   m_Name: GI scene
   m_EditorClassIdentifier: 
-  root: {fileID: -927199367670048503, guid: 99709a7020306c54886bb8dea50e55f4, type: 3}
+  root: {fileID: -927199367670048503, guid: fbc12b622053683479b537e8671f5212, type: 3}

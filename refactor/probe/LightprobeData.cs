@@ -6,7 +6,7 @@ using UnityEngine;
 //freeform version and hash version (currently hash version)
 //make a parent class and derive child class
 //(areaProbeData vs hashProbeData) //probably a "shaderless" version too, for generic rendering
-public class lightprobeData : MonoBehaviour
+public class lightprobeData //: MonoBehaviour
 {
 	//lightprobeData class manage a custom cubemap format,
 	//it initialize the atlas by capturing the scene, at set points, using a cubemap camera
@@ -50,7 +50,7 @@ public class lightprobeData : MonoBehaviour
 	    setCameraData();
         SetAtlas();
         updateAll();
-        destroyCamera();
+        //destroyCamera();
     }
 
     
@@ -62,19 +62,27 @@ public class lightprobeData : MonoBehaviour
 
         //Set camera parameters
         lens = pivot.GetComponent<Camera>();
-        lens.backgroundColor = Color.blue;
+	    lens.backgroundColor = Color.blue;
         lens.clearFlags = CameraClearFlags.SolidColor;
         lens.allowMSAA = false;
         lens.cullingMask = 1 << 8;//what mask?
-
+	    ////TODO: pass capture shader/texture data here
+	    //should probably have an alternative for regular scene rendering
+	    lens.SetReplacementShader(capture, "RenderType");
+	    
         //set rendertexture
-        sceneCapture = new RenderTexture(cubemapSize, cubemapSize, 24);
+	    sceneCapture = new RenderTexture(cubemapSize, cubemapSize, 24);
         sceneCapture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
         sceneCapture.antiAliasing = 1;
         sceneCapture.filterMode = FilterMode.Point;
         sceneCapture.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
         sceneCapture.depth = 16;
-        sceneCapture.Create();
+	    sceneCapture.Create();
+	    
+	    //
+	    lens.targetTexture = sceneCapture;
+	    lens.forceIntoRenderTexture = true;
+        
     }
 	private void SetAtlas(){
 
@@ -86,7 +94,9 @@ public class lightprobeData : MonoBehaviour
 		atlas.Create();
 		//set material
 		atlasTransfer = new Material(transfer);
-		Debug.Log(atlasTransfer);
+		atlasTransfer.SetTexture("_Cube",sceneCapture);
+
+		//Debug.Log(atlasTransfer);
 	}
     public  void updateAll(){
         for (int i = 0; i < probeNumber; i++)
@@ -94,14 +104,15 @@ public class lightprobeData : MonoBehaviour
             int x = i / atlasSize;
             int y = i % atlasSize;
 	        updateCell(x, y);//TODO:Add the origin!!!!!!!!!
-            Debug.Log(sceneCapture.depth);
         }
     }
 
 	void destroyCamera(){
 		//TODO: how about just disabling it?
 		sceneCapture.Release();
-		Destroy(pivot);
+		//Destroy(pivot);
+		pivot.SetActive(false);
+		
 	}
 
     
@@ -116,10 +127,18 @@ public class lightprobeData : MonoBehaviour
 	    //-------------------- //TODO:if freeform: for each zone get center data
 	    pivot.transform.rotation = Quaternion.identity;//TODO: orientation if freeform is OBB instead of AABB?
 
-        ////TODO: pass capture shader/texture data here
-        //should probably have an alternative for regular scene rendering
-        lens.SetReplacementShader(capture, "RenderType");
-        lens.RenderToCubemap(sceneCapture);
+		pivot.GetComponent<Camera>().RenderToCubemap(sceneCapture);
+		//lens.RenderToCubemap(sceneCapture);
+		
+		
+		//debug--------------------------------------
+		//GameObject debugposition = GameObject.CreatePrimitive(PrimitiveType.Sphere);//new GameObject();
+		//debugposition.transform.position = pivot.transform.position;
+		//debugposition.SetActive(false);
+		////Debug.Log(RenderTexture.active);
+		////Debug.Log(lens.targetTexture.dimension);
+		//Debug.Break();
+		//-------------------------------------------
 
         updateTile(x, y);
     }

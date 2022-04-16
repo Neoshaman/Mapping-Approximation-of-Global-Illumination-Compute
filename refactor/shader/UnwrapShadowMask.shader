@@ -1,9 +1,5 @@
-﻿Shader "MAGIC/UnwrapShadowMask"
+Shader "MAGIC/UnwrapShadowMask"
 {
-    Properties
-    {
-        _MainTex ("Texture", 2D) = "white" {}
-    }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
@@ -32,13 +28,11 @@
                 LIGHTING_COORDS(2,3)
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
-
             rasterData vertexProgram ( meshData input )
             {
                 rasterData output;
                 output.vertex = unwrap(input.uv, input.vertex.w);
+                output.uv = input.uv;
                 return output;
             }
 

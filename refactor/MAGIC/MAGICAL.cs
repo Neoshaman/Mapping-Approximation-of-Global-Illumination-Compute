@@ -16,10 +16,9 @@ public class MAGICAL //MAGIC applied by lightprobe
 
     globalLights globalLights;
 
+	//GI BUFFER
     public Shader GI;
     Material GIpass;
-
-	//GI BUFFER
 	RenderTexture displayBuffer;//used to show GI
 	RenderTexture accumulationBuffer;//used to accumulate the rays
     RenderTexture swap;
@@ -28,13 +27,18 @@ public class MAGICAL //MAGIC applied by lightprobe
     public Shader direct;
     Material directPass;
 	RenderTexture directlight;
-
-    public  void SetGlobalLights (globalLights lights){
+	
+	//---------------INIT-----------------------------------------------
+	public  void SetGlobalLights (globalLights lights){
         globalLights = lights;
     }
-	private void initDirectLight (Mesh[] mesh, RenderTexture probes){
+	private void initDirectLight (Mesh[] mesh, Vector3 origin, RenderTexture probes){
         directPass = new Material(direct);
 		directPass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
+		directPass.SetVector("_MainLight",globalLights.directionalLight);
+		directPass.SetVector("_Origin",origin);
+
+		directlight = new RenderTexture(size, size, 24);
         RenderSurface.setCanvas(directlight,size);
         RenderSurface.applyShader(mesh,directlight,directPass);
 	}
@@ -43,7 +47,10 @@ public class MAGICAL //MAGIC applied by lightprobe
         setGlobalLightsToGI();
         setSceneDataToGI(origin,probes);
         setGIBufferToGI();
-        setLMGBToGI(LMGB);
+	    setLMGBToGI(LMGB);
+        
+	    displayBuffer = new RenderTexture(size, size, 24);
+	    accumulationBuffer = new RenderTexture(size, size, 24);
         RenderSurface.setCanvas(displayBuffer,size);
         RenderSurface.setCanvas(accumulationBuffer,size);
         RenderSurface.applyShader(mesh,displayBuffer,directPass);
@@ -51,13 +58,41 @@ public class MAGICAL //MAGIC applied by lightprobe
     }
     public  void InitMAGICAL (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
         Kernel = new Vector4();
-	    initDirectLight(mesh,probes);
+	    initDirectLight(mesh,origin,probes);
 	    initGIBuffer(mesh,origin,probes,LMGB);
     }
- 
+    
+    
+    
+	void setGlobalLightsToGI(){
+		GIpass.SetTexture("_Skybox", globalLights.sky, UnityEngine.Rendering.RenderTextureSubElement.Default);
+		GIpass.SetVector("_MainLight",globalLights.directionalLight);
+		GIpass.SetColor("_Ambientsky",globalLights.ambientSky);
+		GIpass.SetColor("_Ambientcolor",globalLights.ambientLight);
+	}
+	void setSceneDataToGI(Vector3 origin, RenderTexture probes){
+		GIpass.SetVector("_Origin",origin);
+		GIpass.SetVector("_Kernel",Kernel);
+		GIpass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
+		GIpass.SetTexture("_LMdirect", directlight, UnityEngine.Rendering.RenderTextureSubElement.Default);
+	}
+	void setGIBufferToGI(){
+		GIpass.SetTexture("_Accumulation", accumulationBuffer, UnityEngine.Rendering.RenderTextureSubElement.Default);
+		GIpass.SetTexture("_Display", displayBuffer, UnityEngine.Rendering.RenderTextureSubElement.Default);
+	}
+	void setLMGBToGI(RenderTexture[] LMGB){
+		GIpass.SetTexture("_Albedo", LMGB[0], UnityEngine.Rendering.RenderTextureSubElement.Default);
+		GIpass.SetTexture("_Wnormal", LMGB[1], UnityEngine.Rendering.RenderTextureSubElement.Default);
+		GIpass.SetTexture("_Wposition", LMGB[2], UnityEngine.Rendering.RenderTextureSubElement.Default);
+		GIpass.SetTexture("_Shadowmask", LMGB[3], UnityEngine.Rendering.RenderTextureSubElement.Default);
+	}
+	
+	
+ //-----------------UPDATE----------------------------------------
     public  void updateDirectLight (Mesh[] mesh){
         RenderSurface.applyShader(mesh,directlight,directPass);
     }
+    
     public  void updateGIBuffer (Mesh[] mesh){
 	    const int numSamples = 64; //(number of rays)
 	    const float phi = 1.618033988f;//golden number
@@ -118,30 +153,8 @@ public class MAGICAL //MAGIC applied by lightprobe
             // sampler2D _Wposition;
             // sampler2D _Shadowmask;
 
-            public RenderTexture returnDisplay(){
-                return displayBuffer;
-            }
+	public RenderTexture returnDisplay(){return displayBuffer;}
+	public RenderTexture returnDirect(){return directlight;}
+	public RenderTexture returnAccum(){return accumulationBuffer;}
 
-    void setGlobalLightsToGI(){
-        GIpass.SetTexture("_Skybox", globalLights.sky, UnityEngine.Rendering.RenderTextureSubElement.Default);
-        GIpass.SetVector("_MainLight",globalLights.directionalLight);
-        GIpass.SetColor("_Ambientsky",globalLights.ambientSky);
-        GIpass.SetColor("_Ambientcolor",globalLights.ambientLight);
-    }
-    void setSceneDataToGI(Vector3 Origin, RenderTexture probes){
-        GIpass.SetVector("_Origin",Origin);
-        GIpass.SetVector("_Kernel",Kernel);
-        GIpass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
-        GIpass.SetTexture("_LMdirect", directlight, UnityEngine.Rendering.RenderTextureSubElement.Default);
-    }
-    void setGIBufferToGI(){
-        GIpass.SetTexture("_Accumulation", accumulationBuffer, UnityEngine.Rendering.RenderTextureSubElement.Default);
-        GIpass.SetTexture("_Display", displayBuffer, UnityEngine.Rendering.RenderTextureSubElement.Default);
-    }
-    void setLMGBToGI(RenderTexture[] LMGB){
-        GIpass.SetTexture("_Albedo", LMGB[0], UnityEngine.Rendering.RenderTextureSubElement.Default);
-        GIpass.SetTexture("_Wnormal", LMGB[1], UnityEngine.Rendering.RenderTextureSubElement.Default);
-        GIpass.SetTexture("_Wposition", LMGB[2], UnityEngine.Rendering.RenderTextureSubElement.Default);
-        GIpass.SetTexture("_Shadowmask", LMGB[3], UnityEngine.Rendering.RenderTextureSubElement.Default);
-    }
 }

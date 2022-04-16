@@ -27,18 +27,20 @@ public class LMGB //HOLD and initialize graphic data in a lightmap to compute li
 
 	void setShader(){
 		shader = new Shader[4];
-
         shader[0] = bakeAlbedo;
         shader[1] = bakeWorldNormal;
         shader[2] = bakeWorldPosition;
-        shader[3] = BakeShadowMasking;
+		shader[3] = BakeShadowMasking;
 	}
-	public void initializeLMGB( Mesh[] mesh){
+	public void initializeLMGB( Mesh[] mesh ){
 		setShader();
 		texture = new RenderTexture[4];
 		for (int lmgbLayer = 0; lmgbLayer < texture.Length; lmgbLayer++)
-        {
-			RenderSurface.initCanvasFrame(mesh, shader[lmgbLayer], texture[lmgbLayer], size);//null exception
+		{
+			texture[lmgbLayer] = new RenderTexture(size, size, 24);
+			RenderSurface.initCanvasFrame(mesh, shader[lmgbLayer], texture[lmgbLayer], size);//TODO:null exception
+			//Debug.Log(texture[0]);
+
         }
 	}
 }

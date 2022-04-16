@@ -1,12 +1,12 @@
 Shader "MAGIC/DirectLitBoxShadow"
 {
-    Properties
-    {
-        _MainTex ("Cubemap Atlas", 2D) = "black" {}
-        // _DirectLightMap ("Direct Lighting", 2D) = "black" {}
-        //_MainLight ("Main Light", Vector) = (1,1,1,1)
-        //_Origin ("Origin", Vector) = (0,0,0,0)
-    }
+    //Properties
+    //{
+    //    _MainTex ("Cubemap Atlas", 2D) = "black" {}
+    //    // _DirectLightMap ("Direct Lighting", 2D) = "black" {}
+    //    //_MainLight ("Main Light", Vector) = (1,1,1,1)
+    //    //_Origin ("Origin", Vector) = (0,0,0,0)
+    //}
     SubShader
     {
         Tags { "RenderType"="Opaque" }
@@ -39,8 +39,8 @@ Shader "MAGIC/DirectLitBoxShadow"
             rasterData vertexProgram (meshData input)
             {
                 rasterData output;
-                output.wpos = mul(unity_ObjectToWorld, input.vertex);    //world position
                 output.vertex = UnityObjectToClipPos(input.vertex);      //screen position
+                output.wpos = mul(unity_ObjectToWorld, input.vertex);    //world position
                 output.wnormals =UnityObjectToWorldNormal(input.normal); //normal to world normal
 
                 output.color = float4(input.uv, 0,1);// v.color;
@@ -101,6 +101,7 @@ Shader "MAGIC/DirectLitBoxShadow"
                 float4 directlight  = tex2Dlod( _MainTex, float4(shadowdirect,0,4));
                 float4 occlufactor  = tex2Dlod( _MainTex, float4(shadowdirect,0,7));
                 float4 occlusion    = occlufactor.b * (skyocclusion + 1.0);
+                return fixed4(1,0,0,1);
                 return occlusion;
             }
             ENDCG
