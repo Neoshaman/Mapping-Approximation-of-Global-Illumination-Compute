@@ -20,4 +20,8 @@ public class globalLights : ScriptableObject
         ambientSky = new Color();
 	    sky = new RenderTexture(256,256,24);
     }
+    
+	public void set(){}
+	
+	public void getlight(){}
 }

@@ -38,19 +38,22 @@ Shader "MAGIC/BoxGI"
             #pragma fragment fragmentProcessing
             #include "UnityCG.cginc"
             #include "ShaderTools.cginc"
+            
+            float4x4 _PosMat;
+
 
             struct meshData
             {
                 float4 vertex	: POSITION; 
                 fixed3 normal   : NORMAL;
-                // float2 uv		: TEXCOORD1;
+                 float2 uv		: TEXCOORD0;
                 // fixed4 color    : COLOR;
             };
 
             struct rasterData
             {
                 float4 vertex	: POSITION;
-                float4 wpos     : TEXCOORD1;
+                float4 wpos     : TEXCOORD0;
                 fixed3 wnormals : NORMAL;
                 // fixed4 color    : COLOR;
             };
@@ -58,12 +61,18 @@ Shader "MAGIC/BoxGI"
             rasterData vertexProgram ( meshData input)//, out rasterData output )
             {
                 rasterData output;
-                output.vertex   = UnityObjectToClipPos ( input.vertex );    //screen position
-                output.wpos     = mul ( unity_ObjectToWorld, input.vertex );//world position
+                output.vertex = unwrap(input.uv, input.vertex.w);      //screen position
+                //output.vertex   = UnityObjectToClipPos ( input.vertex );    //screen position
+
+                // output.wpos     = mul ( unity_ObjectToWorld, input.vertex );//world position
+                output.wpos     = mul ( _PosMat, input.vertex );//world position
+
                 output.wnormals = UnityObjectToWorldNormal ( input.normal );//normal to world normal
                 // output.color    = float4 ( input.uv, 0, 1 );
                 return output;
             }
+            
+            // float4x4 p;
             
             //globals
             sampler2D _Skybox;              //not used yet
@@ -119,6 +128,7 @@ Shader "MAGIC/BoxGI"
             fixed4 fragmentProcessing ( rasterData input ) : COLOR
             {
                 //set size
+                const float numRays = 64; // set that externally
                 const float  size      = 4;//not const, expose as parameter
                 const float2 cuberange = float2 ( 16, 16 );//not const, expose as parameter
                 const float  epsilon   = 0.000001;
@@ -158,7 +168,7 @@ Shader "MAGIC/BoxGI"
                 //chromaLum
                 irradiance = float4(RgbToYCbCr(irradiance),1);
                 //divide by num ray
-                irradiance /= 64;
+                irradiance /= numRays;
                 //turn the Y (lum) into 16bits
                 float4 lum = Float32ToIntrgba(irradiance.x);
                 //encode split lum and chroma

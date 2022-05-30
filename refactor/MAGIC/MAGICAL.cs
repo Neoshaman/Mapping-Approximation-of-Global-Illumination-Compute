@@ -27,21 +27,44 @@ public class MAGICAL //MAGIC applied by lightprobe
     public Shader direct;
     Material directPass;
 	RenderTexture directlight;
+
+
+
+	Matrix4x4 positionMatrix = Matrix4x4.identity;
 	
 	//---------------INIT-----------------------------------------------
 	public  void SetGlobalLights (globalLights lights){
         globalLights = lights;
-    }
+	}
+    
+    
 	private void initDirectLight (Mesh[] mesh, Vector3 origin, RenderTexture probes){
         directPass = new Material(direct);
 		directPass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
 		directPass.SetVector("_MainLight",globalLights.directionalLight);
 		directPass.SetVector("_Origin",origin);
+		Debug.Log(origin);
+
+		//debug world matrix in shader
+		// positionMatrix.SetTRS(
+		// 	new Vector3(32,0,32),		//position
+		// 	Quaternion.Euler(
+		// 		0,
+		// 		0,
+		// 		0
+		// 	),						//rotation
+		// 	new Vector3(64,1,64)		//scale
+		// );
+		directPass.SetMatrix("_PosMat", positionMatrix);
+		//end debug
+
 
 		directlight = new RenderTexture(size, size, 24);
         RenderSurface.setCanvas(directlight,size);
         RenderSurface.applyShader(mesh,directlight,directPass);
 	}
+	
+	
     private void initGIBuffer (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
         GIpass = new Material(GI);
         setGlobalLightsToGI();
@@ -89,7 +112,25 @@ public class MAGICAL //MAGIC applied by lightprobe
 	
 	
  //-----------------UPDATE----------------------------------------
-    public  void updateDirectLight (Mesh[] mesh){
+	public  void updateDirectLight (Mesh[] mesh){
+		//directPass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
+
+		// //debug world matrix in shader
+		// Matrix4x4 positionMatrix = Matrix4x4.identity;
+		// positionMatrix.SetTRS(
+		// 	new Vector3(0,0,0),		//position
+		// 	Quaternion.Euler(
+		// 		0,
+		// 		0,
+		// 		0
+		// 	),						//rotation
+		// 	new Vector3(1,1,1)		//scale
+		// );
+		
+		// directPass.SetMatrix("_PosMat", positionMatrix);
+		// //end debug
+
+		directPass.SetVector("_MainLight",globalLights.directionalLight);
         RenderSurface.applyShader(mesh,directlight,directPass);
     }
     

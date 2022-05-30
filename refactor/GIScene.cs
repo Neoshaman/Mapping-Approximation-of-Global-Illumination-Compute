@@ -22,6 +22,7 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	LMGB GIbuffer;//lightmap Graphic buffer, texture data to compute lighting operation
 	MAGICAL GI;// manage the update of light and global illumination using data from probes and LMGB
 
+	Texture2D debugAtlas;
 
 	//TODO: 
 	//farfield? (distant scene rendering not within the Lightmap chunk
@@ -41,12 +42,15 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
         GIbuffer = new LMGB();
 	    GI = new MAGICAL();
 	    
+	    
+	    
+	    
 	    Vector3 origine = root.gameObject.GetComponent<Renderer>().bounds.min;
         geometry = new Mesh[1];
 	    geometry[0] = root.GetComponent<MeshFilter>().sharedMesh;
 	    root.layer = LayerMask.NameToLayer("capture");
 	    
-        shaderSetup(shader);
+	    shaderSetup(shader);//Debug.Log(origine);
 
         //TODO: set farfield
         //alternative to farfield
@@ -67,8 +71,11 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	        //root.gameObject.material();
 	        // Material CanvasFrame = root.GetComponent<MeshRenderer>().sharedMaterial;
 	        Material dmat  = new Material(shader.debugshader);
-	        // Material dmat  = new Material(shader.GILMLit);
-	        	root.GetComponent<Renderer>().material = dmat;
+			// Material dmat  = new Material(shader.GILMLit);
+				
+			root.GetComponent<Renderer>().material = dmat;
+			root.GetComponent<Renderer>().sharedMaterial = dmat;
+	        	
 	        // root.GetComponent<Renderer>().material = new Material(shader.GILMLit);
 	        // root.GetComponent<MeshRenderer>().material = new Material(shader.GILMLit);
 	        // dmat = root.GetComponent<Renderer>().material;// = new Material(shader.GILMLit);
@@ -80,8 +87,9 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	    	debug.GetComponent<Renderer>().material = dmat;// new Material(shader.debugshader);
 	    	// RenderSurface.show(debug, GI.returnDisplay());
 
-	    //in theory show the GI texture buffer on the main mesh, which is to test by passing debug data such as bright red
-	    RenderSurface.show(root, GI.returnDisplay());
+			//in theory show the GI texture buffer on the main mesh, which is to test by passing debug data such as bright red
+			RenderSurface.show(root, GI.returnDisplay());
+		//END DEBUG
     }
 
     public void shaderSetup (shaderIndex getshader)
@@ -102,12 +110,15 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
     public void updateLight(){
 	    GI.updateDirectLight(geometry);//TODO:only when change happen, this render and cache direct lighting on a texture
     }
-    public void updateGI(){
-	    GI.updateGIBuffer(geometry);
-	    if (GI.rayCounter == 0){//we accumulate one ray per frame, when all ray are accumulated one bounce of GI is done
-		    RenderSurface.show(root, GI.returnDisplay());// update the double buffering of the GI compute
-		    //Debug.Log(GI.returnDisplay());
-	    }
+	public void updateGI(){
+    	GI.updateGIBuffer(geometry);
+	    
+		//if (GI.rayCounter == 0){//we accumulate one ray per frame, when all ray are accumulated one bounce of GI is done
+		//    RenderSurface.show(root, GI.returnDisplay());// update the double buffering of the GI compute
+		//    //Debug.Log(GI.returnDisplay());
+	    //}
+	    
+	    
 	    //DEBUG: try to show the raw texture within a utils class into the debug quad,
 	    //to see if its accessible and properly rendered
 	    //RenderSurface.show(debug,UVprobe.atlas);
