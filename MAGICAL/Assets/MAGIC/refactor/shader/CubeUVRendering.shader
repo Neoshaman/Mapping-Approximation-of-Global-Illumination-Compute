@@ -1,9 +1,9 @@
-﻿Shader "MAGIC/CubeUVRendering"
+Shader "MAGIC/CubeUVRendering"
 {
-    Properties
-    {
-        _MainTex ("Texture", 2D) = "white" {}
-    }
+    //Properties
+    //{
+    //    _MainTex ("Texture", 2D) = "white" {}
+    //}
     SubShader
     {
         Tags { "RenderType"="Opaque" }
@@ -49,6 +49,7 @@
             {
             	//add blue when no uv ->skybox background color,//initialized within code
             	//depth
+                //return fixed4(1,0,0,1);
                 return float4 (input.uv,0,0);
             }
             ENDCG

@@ -2,39 +2,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//freeform version and hash version
+//TODO: 
+//freeform version and hash version (currently hash version)
 //make a parent class and derive child class
-//(areaprobedata vs hashprobedata) //probably a "shaderless" version too
-public class lightprobeData
+//(areaProbeData vs hashProbeData) //probably a "shaderless" version too, for generic rendering
+public class lightprobeData //: MonoBehaviour
 {
+	//lightprobeData class manage a custom cubemap format,
+	//it initialize the atlas by capturing the scene, at set points, using a cubemap camera
+	
 	int cellsize = 4; //hash dimension
-    int cubemapSize = 64;
-	int atlasSize = 16; //atlasSize on the side
-	int probeNumber = 256; //atlasSize² //max addressing with 8bit for freeform
-    int tileSize = 128; //2048/16
+	int cubemapSize = 64; //size of the cubemap capturing the scene
+	int atlasSize = 16; //atlas Size, on the side, hold 16x16 tiles
+	int probeNumber = 256; //-> atlasSize² //max number of probes, addressing limit with 8bit for freeform
+	int tileSize = 128; //-> 2048/16  //size of tile in the atlas
 	int atlasTextureSize = 2048; //atlas size x tilesize //16*128=2048
 	
-	//Origine!!!!!!!!!
+	//TODO: Origine!!!!!!!!! for offset of hash!
 	
-	
-	//rethink capture for regular cubemap rendering (multi material)
-
-	public Shader capture;//get a view of the scene    //passed externally? // see setreplacementshader in updatecell
-
-	public Shader transfer;//unwrap cubemap to tile
-	Material atlasTransfer;//apply unwrap to atlas
-	// public RenderTexture atlas{ get => atlas; protected set => atlas = value; } //should have layer for extra data like depth or LPGB
-	public RenderTexture atlas;//{ get => atlas; protected set => atlas = value; } //should have layer for extra data like depth or LPGB
-    // RenderTexture farfield;//not part of lightprobe?
-	
-	//external?
+	//TODO: rethink capture for regular cubemap rendering (multi material)
+	//TODO:external?
+	public Shader capture;//get a view of the scene using this shader   //passed externally? // see setreplacementshader in updatecell
 	Camera lens; //cubemap capture
 	GameObject pivot;//camera position
 	RenderTexture sceneCapture;//temp cubemap for transfer to atlas
 
-    //editor write to this? should be extrenal that pass data?
+
+	public Shader transfer;//shader that unwrap cubemap to tile
+	Material atlasTransfer;//use to apply unwrap shader to atlas
+	public RenderTexture atlas;//should have layer for extra data like depth or LPGB
+    //TODO: RenderTexture farfield;//not part of lightprobe?
+
+
+	//TODO:
+	//editor write to this? should be external that pass data?
     //--------------------------------------------------------------------
-    //for freeform 
+	//for freeform (cubemap defined by hand placed zone instead of hash)
     // class zone{//use unity built in Bounds class instead?
     //     Vector3 start,size, center;//AABB
     //     //compute center
@@ -46,19 +49,11 @@ public class lightprobeData
 	    setCameraData();
         SetAtlas();
         updateAll();
+
+		atlas.GenerateMips();
     }
 
-    private void SetAtlas(){
-
-        //set atlas
-	    atlas = new RenderTexture(atlasTextureSize, atlasTextureSize, 24);
-	    atlas.antiAliasing = 1;
-	    atlas.filterMode = FilterMode.Point;
-	    atlas.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
-	    atlas.Create();
-        //set material
-        atlasTransfer = new Material(transfer);
-    }
+    
     private void setCameraData(){
 
         //set camera
@@ -67,45 +62,83 @@ public class lightprobeData
 
         //Set camera parameters
         lens = pivot.GetComponent<Camera>();
-        lens.backgroundColor = Color.blue;
+	    lens.backgroundColor = Color.blue;
         lens.clearFlags = CameraClearFlags.SolidColor;
         lens.allowMSAA = false;
         lens.cullingMask = 1 << 8;//what mask?
-
+	    //TODO: pass capture shader/texture data here
+	    //should probably have an alternative for regular scene rendering
+	    lens.SetReplacementShader(capture, "RenderType");
+	    
         //set rendertexture
-        sceneCapture = new RenderTexture(cubemapSize, cubemapSize, 24);
+	    sceneCapture = new RenderTexture(cubemapSize, cubemapSize, 24);
         sceneCapture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
         sceneCapture.antiAliasing = 1;
         sceneCapture.filterMode = FilterMode.Point;
         sceneCapture.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
         sceneCapture.depth = 16;
-        sceneCapture.Create();
+
+	    sceneCapture.Create();
+	    
+	    //
+	    lens.targetTexture = sceneCapture;
+	    lens.forceIntoRenderTexture = true;
+        
     }
+	private void SetAtlas(){
+
+		//set atlas
+		atlas = new RenderTexture(atlasTextureSize, atlasTextureSize, 24);
+		atlas.antiAliasing = 1;
+		atlas.filterMode = FilterMode.Point;
+		atlas.graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
+		
+		atlas.useMipMap = true;
+		atlas.autoGenerateMips = false;
+
+		atlas.Create();
+		//set material
+		atlasTransfer = new Material(transfer);
+		atlasTransfer.SetTexture("_Cube",sceneCapture); //pass externally
+
+		//Debug.Log(atlasTransfer);
+	}
     public  void updateAll(){
         for (int i = 0; i < probeNumber; i++)
         {
             int x = i / atlasSize;
             int y = i % atlasSize;
-	        updateCell(x, y);//Add the origin!!!!!!!!!
+	        updateCell(x, y);//TODO:Add the origin!!!!!!!!!
         }
     }
-    public  void updateCell(int x, int y){
-        //place camera
+
+	void destroyCamera(){
+		//TODO: how about just disabling it?
+		sceneCapture.Release();
+		//Destroy(pivot);
+		pivot.SetActive(false);
+		
+	}
+
+    
+//-----------------------------------------------------
+	public  void updateCell(int x, int y){
+		//this fonction capture a cubemap of the scene from the point of view of a given cell
+        
+		//place camera
 		int midcell = cellsize / 2;
         //-------------------- hashed position
         pivot.transform.position = new Vector3((x * cellsize) + midcell, 0, (y * cellsize) + midcell);
-        //-------------------- if freeform: for each zone get center
-        pivot.transform.rotation = Quaternion.identity;
+	    //-------------------- //TODO:if freeform: for each zone get center data
+	    pivot.transform.rotation = Quaternion.identity;//TODO: orientation if freeform is OBB instead of AABB?
 
-        //pass capture shader/texture data here
-        //should probably have an alternative for regular scene rendering
-        lens.SetReplacementShader(capture, "RenderType");
-        lens.RenderToCubemap(sceneCapture);
-
+		pivot.GetComponent<Camera>().RenderToCubemap(sceneCapture);
+		//lens.RenderToCubemap(sceneCapture);
+		
         updateTile(x, y);
     }
     private void updateTile(int x, int y){
-        //create atlas textures zones
+	    //create the atlas textures zones
         int halftile = tileSize / 2;
         int xt = (x * tileSize) + halftile;
         int yt = (y * tileSize) + halftile;
@@ -114,7 +147,10 @@ public class lightprobeData
         renderTile(size, position);
     }
     private void renderTile(float size, Vector2 offset){
-        //could probably do teh UV selection in shader
+    	//this function use low level immediate render mode to draw on a rendertexture
+    	
+	    // //TODO:
+	    //could probably do the UV selection in shader
         //at each point
         //hash the offset using the size
         //if offset ! of input uniform, add 0
@@ -132,6 +168,7 @@ public class lightprobeData
         GL.LoadOrtho(); 
         atlasTransfer.SetPass(0);
 
+	    //draw with a quad
         GL.Begin(GL.TRIANGLE_STRIP);
         
         //0,0

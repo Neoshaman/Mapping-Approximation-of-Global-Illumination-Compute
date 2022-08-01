@@ -1,0 +1,67 @@
+
+//TODO: 
+//freeform version and hash version (currently hash version)
+//make a parent class and derive child class
+//(areaProbeData vs hashProbeData) //probably a "shaderless" version too, for generic rendering
+public class lightprobeData //: MonoBehaviour
+	
+	//TODO: Origine!!!!!!!!! for offset of hash!
+	//TODO: rethink capture for regular cubemap rendering (multi material)
+
+	public Shader capture;//get a view of the scene using this shader   //passed externally? // see setreplacementshader in updatecell
+
+	public RenderTexture atlas;//should have layer for extra data like depth or LPGB
+    //TODO: RenderTexture farfield;//not part of lightprobe?
+	
+	//TODO:external?
+	Camera lens; //cubemap capture
+	GameObject pivot;//camera position
+	RenderTexture sceneCapture;//temp cubemap for transfer to atlas
+
+	//TODO:
+	//editor write to this? should be external that pass data?
+    //--------------------------------------------------------------------
+	//for freeform (cubemap defined by hand placed zone instead of hash)
+    // class zone{//use unity built in Bounds class instead?
+    //     Vector3 start,size, center;//AABB
+    //     //compute center
+    //     //get set start size with computecenter updated
+    // }
+    // zone[] cells;//Bounds[] cells;
+    //--------------------------------------------------------------------
+  
+    private void setCameraData(){
+	    //TODO: pass capture shader/texture data here
+	    //should probably have an alternative for regular scene rendering
+	    lens.SetReplacementShader(capture, "RenderType");
+
+    public  void updateAll(){
+	        updateCell(x, y);//TODO:Add the origin!!!!!!!!!
+
+	void destroyCamera(){
+		//TODO: how about just disabling it?
+
+    
+//-----------------------------------------------------
+	public  void updateCell(int x, int y){
+		//this fonction capture a cubemap of the scene from the point of view of a given cell
+        
+		//place camera
+		int midcell = cellsize / 2;
+        //-------------------- hashed position
+        pivot.transform.position = new Vector3((x * cellsize) + midcell, 0, (y * cellsize) + midcell);
+	    //-------------------- //TODO:if freeform: for each zone get center data
+	    pivot.transform.rotation = Quaternion.identity;//TODO: orientation if freeform is OBB instead of AABB?
+
+		pivot.GetComponent<Camera>().RenderToCubemap(sceneCapture);
+		//lens.RenderToCubemap(sceneCapture);
+	
+    private void renderTile(float size, Vector2 offset){
+    	//this function use low level immediate render mode to draw on a rendertexture
+    	
+	    // //TODO:
+	    //could probably do the UV selection in shader
+        //at each point
+        //hash the offset using the size
+        //if offset ! of input uniform, add 0
+        //else add transferred color using remap UV

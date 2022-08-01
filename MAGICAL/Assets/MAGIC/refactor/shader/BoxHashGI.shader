@@ -38,19 +38,22 @@ Shader "MAGIC/BoxGI"
             #pragma fragment fragmentProcessing
             #include "UnityCG.cginc"
             #include "ShaderTools.cginc"
+            
+            float4x4 _PosMat;
+
 
             struct meshData
             {
                 float4 vertex	: POSITION; 
                 fixed3 normal   : NORMAL;
-                // float2 uv		: TEXCOORD1;
+                 float2 uv		: TEXCOORD0;
                 // fixed4 color    : COLOR;
             };
 
             struct rasterData
             {
                 float4 vertex	: POSITION;
-                float4 wpos     : TEXCOORD1;
+                float4 wpos     : TEXCOORD0;
                 fixed3 wnormals : NORMAL;
                 // fixed4 color    : COLOR;
             };
@@ -58,12 +61,18 @@ Shader "MAGIC/BoxGI"
             rasterData vertexProgram ( meshData input)//, out rasterData output )
             {
                 rasterData output;
-                output.vertex   = UnityObjectToClipPos ( input.vertex );    //screen position
-                output.wpos     = mul ( unity_ObjectToWorld, input.vertex );//world position
+                output.vertex = unwrap(input.uv, input.vertex.w);      //screen position
+                //output.vertex   = UnityObjectToClipPos ( input.vertex );    //screen position
+
+                // output.wpos     = mul ( unity_ObjectToWorld, input.vertex );//world position
+                output.wpos     = mul ( _PosMat, input.vertex );//world position
+
                 output.wnormals = UnityObjectToWorldNormal ( input.normal );//normal to world normal
                 // output.color    = float4 ( input.uv, 0, 1 );
                 return output;
             }
+            
+            // float4x4 p;
             
             //globals
             sampler2D _Skybox;              //not used yet
@@ -119,22 +128,26 @@ Shader "MAGIC/BoxGI"
             fixed4 fragmentProcessing ( rasterData input ) : COLOR
             {
                 //set size
+                const float numRays = 64; // set that externally
                 const float  size      = 4;//not const, expose as parameter
+
                 const float2 cuberange = float2 ( 16, 16 );//not const, expose as parameter
                 const float  epsilon   = 0.000001;
 
                 float3 origin       = _Origin.xyz;
                 float3 worldnorm    = normalize ( input.wnormals ) + epsilon;
-                float3 pos          = input.wpos.xyz - origin + 0.001;//why the 0.001 again?
+                float3 pos          = input.wpos.xyz;// - origin + 0.001;//why the 0.001 again?
 
                 //hash position to read the right cubemap in the atlas
                 float3 hashpos      = floor ( pos / size ); 
                 float3 hash_offset  = hashpos * size;
-                float2 hash_id      = max ( float2 ( 0, 0 ), min ( hashpos.xz, cuberange ) );
+                // float2 hash_id      = max ( float2 ( 0, 0 ), min ( hashpos.xz, cuberange ) );
+                float2 hash_id      = max ( float2 ( 0, 0 ), min ( hashpos.xy, cuberange ) );
 
                 //current Ray direction, passed as paramater
                 float3 ray = normalize ( _Kernel.rgb + worldnorm );
-                if ( _Kernel.a == 0 )  { ray = float3( 0.0, 1.0, 0.0 ); }
+                // if ( _Kernel.a == 0 )  { ray = float3( 0.0, 1.0, 0.0 ); }
+                if ( _Kernel.a == 0 )  { ray = float3( 0.0, 0.0, 1.0 ); }
 
                 //box projection of world normal-> ray (why again?)
                 float3 cubecenter   = hash_offset + ( size / 2 );
@@ -156,19 +169,22 @@ Shader "MAGIC/BoxGI"
                 //float4 result = float4(gi.rgb, 2.0);
 
                 //chromaLum
-                irradiance = float4(RgbToYCbCr(irradiance),1);
+                float4 result = float4(RgbToYCoCg(irradiance),1);
+                // result = result.x;
                 //divide by num ray
-                irradiance /= 64;
+                result /= numRays;
                 //turn the Y (lum) into 16bits
-                float4 lum = Float32ToIntrgba(irradiance.x);
+                float4 lum = Float32ToIntrgba(result.x);
+                // float4 lum = (result.x);
                 //encode split lum and chroma
-                irradiance = float4(lum.x,lum.y, irradiance.y,irradiance.z);
+                result = float4(lum.x,lum.y, result.y,result.z);
 			    //sample accum
                 float4 accum    = tex2D   ( _Display, cubesample.rg );
 			    //accumulation (accum + sample accum) //display materal must reconstruct RGB from chroma lum
-                irradiance += accum;
+                result += accum;
 			    //return 16bit encoding
-                return irradiance;
+                // return 1-result;
+                return result;
             }
             ENDCG
         }

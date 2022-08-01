@@ -37,6 +37,7 @@
             sampler2D _MainTex;
             sampler2D _GI;
             float4 _MainTex_ST;
+            float4 _GI_ST;
 
             rasterData vert (meshData input)
             {
@@ -53,14 +54,21 @@
                 fixed4 color = tex2D(_MainTex, input.uv);
                 //sample displayGI texture
                 fixed4 GI = tex2D(_GI, input.uv);
+                
                 //decode GI (16bit -> chromalum -> RGB)
                 float luminance = IntrgbaToFloat32(float4(GI.xy,0,0));
-                GI = float4(YCbCrToRgb(float3(luminance,GI.z,GI.w)),1);
+                float3 c = YCoCgToRgb(float3(luminance,GI.z,GI.w));
+                // GI = float4(c,1);
+
                 //apply GI to texture
                 color += GI;
+
                 // apply fog
-                UNITY_APPLY_FOG(input.fogCoord, color);
-                return color;
+                // UNITY_APPLY_FOG(input.fogCoord, color);
+
+                // return color;
+                // return GI.a;
+                return 1 - luminance*16;
             }
             ENDCG
         }

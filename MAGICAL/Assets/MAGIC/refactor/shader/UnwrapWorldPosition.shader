@@ -1,9 +1,6 @@
-﻿Shader "MAGIC/UnwrapWorldPosition"
+Shader "MAGIC/UnwrapWorldPosition"
 {
-    // Properties
-    // {
-    //     _MainTex ("Texture", 2D) = "white" {}
-    // }
+    
     SubShader
     {
         Tags { "RenderType"="Opaque" }

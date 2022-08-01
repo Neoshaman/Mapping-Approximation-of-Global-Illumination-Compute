@@ -1,0 +1,48 @@
+
+	Mesh[] geometry; //TODO:need to set culling mask for LPdata
+	public GameObject root;//TODO:probably don't need the gameobject, just the position //pass by set root functions
+
+//TODO:
+    //Bounds?
+	//Vector3 origine;?
+	//Vector3 size;?
+
+
+    //TODO:probably need an id too in case of share texture among scenes
+	lightprobeData UVprobe;
+
+	LMGB GIbuffer;//lightmap Graphic buffer, texture data to compute lighting operation
+	MAGICAL GI;// manage the update of light and global illumination using data from probes and LMGB
+
+	//TODO: 
+	//farfield? (distant scene rendering not within the Lightmap chunk
+
+	//void initOrigin(Vector3 origin){
+        // HOW TO HANDLE MULTIPLE SCENE ie multiple shader origin ref per scene Mat per chunks?
+       //adjust scene hashing origin to mesh bound 
+	//	origine = geometry[0].bounds.min;
+	//	Bounds b = geometry[0].bounds;//object spaces NOT WORLDSPACE
+       // size = b.max-b.min;
+		//Shader.SetGlobalVector("_Origin",b.min);
+    //}    //init scene bound
+    //init farfield?
+
+	public void init(globalLights globalLights, shaderIndex shader)
+        //TODO: set farfield
+        //alternative to farfield
+        //set lmgb in tiles
+        //store lmgb tile index in cubemap
+        //render all scenes in cubemap as UV + tile index
+        //rg = uv, b = sky mask, a = coarse distance?
+        //c1.rg = UV, c1.b = tile index, c1.a = skymask //c2.rg = distance
+        //when sampling LMGB use tile index to offset
+
+
+    	    UVprobe.initAtlas();//TODO:should init as delta of origine!!!
+
+    public void shaderSetup (shaderIndex getshader)
+		//use a scriptable objects to conviniently manage version of shader depending on projects
+
+    public void updateLight(){
+	    GI.updateDirectLight(geometry);//TODO:only when change happen, this render and cache direct lighting on a texture
+    

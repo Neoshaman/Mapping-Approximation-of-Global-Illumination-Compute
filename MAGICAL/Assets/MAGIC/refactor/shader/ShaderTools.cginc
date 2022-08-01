@@ -10,6 +10,9 @@ float4 float2to4_00(float2 number){
 float4 float2to4_01(float2 number){
 	return float4(number,0,1);
 }
+float4 float3to4_1(float3 number){
+	return float4(number,1);
+}
 float4 float4_0001(){
 	return float4(0,0,0,1);
 }
@@ -59,6 +62,23 @@ const float3 toCr = float3( 0.500,-0.419,-0.081);
 const float3 toR  = float3( 1.000, 0.000, 1.403);
 const float3 toG  = float3( 1.000,-0.344,-0.714);
 const float3 toB  = float3( 1.000,-0.773, 0.000);
+
+
+
+float3 RgbToYCoCg(float3 c){
+    float Y  =  0.25 * c.r + 0.5  * c.g + 0.25 * c.b;
+    float Cb =  0.5  * c.r - 0.0  * c.g - 0.50 * c.b;
+    float Cr = -0.25 * c.r + 0.5  * c.g - 0.25 * c.b;
+    return float3(Y, Cb, Cr);
+}
+
+float3 YCoCgToRgb(float3 c){
+    float R = c.x + c.y - c.z;
+    float G = c.x       + c.z;
+    float B = c.x - c.y - c.z;
+    return float3(R, G, B);
+}
+
 
 //--------------------------------------------------------------------
 float wrappedDiffuse(float wrap, float3 normal, float3 light){

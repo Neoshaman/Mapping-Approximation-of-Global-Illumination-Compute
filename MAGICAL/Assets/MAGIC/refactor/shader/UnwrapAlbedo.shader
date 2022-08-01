@@ -1,9 +1,5 @@
 Shader "MAGIC/UnwrapAlbedo"
 {
-    Properties
-    {
-        _MainTex ("Texture", 2D) = "white" {}
-    }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
@@ -30,9 +26,6 @@ Shader "MAGIC/UnwrapAlbedo"
                 float4 vertex	: POSITION;
                 fixed4 color    : COLOR;
             };
-
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
 
             rasterData vertexProgram ( meshData input )
             {
