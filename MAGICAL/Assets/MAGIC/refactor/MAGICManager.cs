@@ -4,8 +4,11 @@ using UnityEngine;
 
 public partial class MAGICManager : MonoBehaviour//probably not a monobehaviaviour
 {
+	//move to config objects?
     public globalLights glight;
    	public shaderIndex shaders;
+
+
 	public GIScene[] scenes;
 	
 	public GameObject DebugRoot;

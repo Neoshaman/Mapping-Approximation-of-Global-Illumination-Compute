@@ -67,7 +67,7 @@ static class RenderSurface
         RenderSurface.render(mesh);
         RenderSurface.close();
     }
-	 private void renderTile(float size, Vector2 offset, RenderTexture canvas, Material painter){
+	public static void renderTile(float size, Vector2 offset, RenderTexture canvas, Material painter){
     	
 	    // //TODO:
 	    //could probably do the UV selection in shader

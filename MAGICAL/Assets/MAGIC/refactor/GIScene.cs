@@ -8,7 +8,7 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	Mesh[] geometry;
 	public GameObject root;
 
-	GameObject debug;//visualizing the output textures from the utils class, quad generated with basic material
+	// GameObject debug;//visualizing the output textures from the utils class, quad generated with basic material
     
     globalLights lightdata;
 
@@ -33,18 +33,13 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
         GIbuffer.initializeLMGB(geometry);
         GI.SetGlobalLights(globalLights);
 	    GI.InitMAGICAL(geometry, origine, UVprobe.atlas, GIbuffer.texture);
-
-
-
         //apply light map material to scene
 
         // Material dmat  = new Material(shader.debugshader);
 		Material dmat  = new Material(shader.GILMLit);
-	
+        // debug = GameObject.CreatePrimitive(PrimitiveType.Quad);
+    	// debug.GetComponent<Renderer>().material = dmat;
 		root.GetComponent<Renderer>().material = dmat;
-
-        debug = GameObject.CreatePrimitive(PrimitiveType.Quad);
-    	debug.GetComponent<Renderer>().material = dmat;
     }
 
     public void shaderSetup (shaderIndex getshader)
