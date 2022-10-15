@@ -7,7 +7,9 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 {
 	Mesh[] geometry;
 	public GameObject root;
-
+	Matrix4x4 positionMatrix = Matrix4x4.identity;
+	//Matrix4x4 rotationMatrix = Matrix4x4.identity;
+	
 	// GameObject debug;//visualizing the output textures from the utils class, quad generated with basic material
     
     globalLights lightdata;
@@ -22,6 +24,8 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
         GIbuffer = new LMGB();
 	    GI = new MAGICAL();
 
+		Matrix4x4 positionMatrix = root.transform.localToWorldMatrix;
+Debug.Log(root.transform.localToWorldMatrix);
 	    Vector3 origine = root.gameObject.GetComponent<Renderer>().bounds.min;
         geometry = new Mesh[1];
 	    geometry[0] = root.GetComponent<MeshFilter>().sharedMesh;
@@ -30,9 +34,9 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	    shaderSetup(shader);
 
 	    UVprobe.initAtlas();
-        GIbuffer.initializeLMGB(geometry);
+		GIbuffer.initializeLMGB(geometry, positionMatrix);
         GI.SetGlobalLights(globalLights);
-	    GI.InitMAGICAL(geometry, origine, UVprobe.atlas, GIbuffer.texture);
+		GI.InitMAGICAL(geometry, origine, UVprobe.atlas, GIbuffer.texture, positionMatrix);
         //apply light map material to scene
 
         // Material dmat  = new Material(shader.debugshader);

@@ -15,12 +15,26 @@ static class RenderSurface
     public  static void clear(){
         GL.Clear(true, true, Color.black);
     }
-    public  static void render(Mesh[] mesh){		
+    public  static void render(Mesh[] mesh, Matrix4x4 matrix){		
 	    //cycle//spin//run//shift//jolt//period//turn//swing//generation//phase//index
 		//pass//sweep//loop//order//move//lap//walk//trace//tour//epoch//time//session
 		for (int pass = 0; pass < mesh.Length; pass++)
 		{
-			Graphics.DrawMeshNow(mesh[pass],  Matrix4x4.identity);
+			// Graphics.DrawMeshNow(mesh[pass],  Matrix4x4.identity);
+			Graphics.DrawMeshNow(mesh[pass],  matrix);
+			
+			// Graphics.DrawMeshNow(mesh[pass],  Matrix4x4.TRS(
+            //         new Vector3(32, 32, 0),     //position
+            //                                     // new Vector3(32,0,32),		//position
+            //         Quaternion.Euler(
+            //             -90,//0,
+            //             0,
+            //             0
+            //         ),                      //rotation
+            //                                 // new Vector3(64,1,64)		//scale
+            //         // new Vector3(100, -100, 100)     //scale
+            //         new Vector3(100, 100, 100)     //scale
+            //     ));
 		}
 	}
 	public  static void close(){
@@ -29,30 +43,32 @@ static class RenderSurface
 	}
 	//---------------------------------------------------------------------
 	//refactor show into a more generic class that takes texture name
-	public  static void show(GameObject frame, RenderTexture canvas){
-		Material CanvasFrame = frame.GetComponent<MeshRenderer>().sharedMaterial;
-		//Material CanvasFrame = frame.GetComponent<Renderer>().material;
-		CanvasFrame.SetTexture("_MainTex", canvas);
-    }
 	public  static void showTexture(GameObject frame, RenderTexture canvas, string textureName){
 		Material CanvasFrame = frame.GetComponent<MeshRenderer>().sharedMaterial;
 		//Material CanvasFrame = frame.GetComponent<Renderer>().material;
 		CanvasFrame.SetTexture(textureName, canvas);
     }
-	
-	public  static void showATLAS(GameObject frame, RenderTexture canvas){
-		Material CanvasFrame = frame.GetComponent<MeshRenderer>().sharedMaterial;
+	public  static void show(GameObject frame, RenderTexture canvas){
+		// Material CanvasFrame = frame.GetComponent<MeshRenderer>().sharedMaterial;
 		//Material CanvasFrame = frame.GetComponent<Renderer>().material;
-		CanvasFrame.SetTexture("_Atlas", canvas);
+		// CanvasFrame.SetTexture("_MainTex", canvas);
+		showTexture(frame, canvas, "_MainTex");
+
     }
-	public  static void initCanvasFrame(Mesh[] mesh, Shader shader, RenderTexture canvas, int size){
+	public  static void showATLAS(GameObject frame, RenderTexture canvas){
+		//Material CanvasFrame = frame.GetComponent<MeshRenderer>().sharedMaterial;
+		//Material CanvasFrame = frame.GetComponent<Renderer>().material;
+		// CanvasFrame.SetTexture("_Atlas", canvas);
+		showTexture(frame, canvas, "_Atlas");
+    }
+	public  static void initCanvasFrame(Mesh[] mesh, Shader shader, RenderTexture canvas, int size, Matrix4x4 matrix){
 		setCanvas(canvas, size);
-        draw(mesh, shader, canvas);
+        draw(mesh, shader, canvas, matrix);
 	}
 	//--------------------------------------------------------------------------------
-    private static void draw(Mesh[] mesh, Shader shader, RenderTexture canvas){
+    private static void draw(Mesh[] mesh, Shader shader, RenderTexture canvas, Matrix4x4 matrix){
 	    Material painter = new Material(shader);
-	    applyShader(mesh,canvas, painter);
+	    applyShader(mesh,canvas, painter, matrix);
     }
 	public static void setCanvas( RenderTexture canvas, int size){
         canvas.antiAliasing = 1;
@@ -61,10 +77,10 @@ static class RenderSurface
         canvas.depth = 16;
         canvas.Create();
 	}
-	public static void applyShader(Mesh[] mesh, RenderTexture canvas, Material painter){
+	public static void applyShader(Mesh[] mesh, RenderTexture canvas, Material painter, Matrix4x4 matrix){
         RenderSurface.initRender(canvas, painter);
         RenderSurface.clear();
-        RenderSurface.render(mesh);
+        RenderSurface.render(mesh, matrix);
         RenderSurface.close();
     }
 	public static void renderTile(float size, Vector2 offset, RenderTexture canvas, Material painter){

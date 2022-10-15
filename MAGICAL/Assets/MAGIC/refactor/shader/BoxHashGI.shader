@@ -38,8 +38,10 @@ Shader "MAGIC/BoxGI"
             #pragma fragment fragmentProcessing
             #include "UnityCG.cginc"
             #include "ShaderTools.cginc"
-            
+            // #include "MAGICTools.cginc"
+
             float4x4 _PosMat;
+            float4x4 _RotMat;
 
 
             struct meshData
@@ -67,7 +69,12 @@ Shader "MAGIC/BoxGI"
                 // output.wpos     = mul ( unity_ObjectToWorld, input.vertex );//world position
                 output.wpos     = mul ( _PosMat, input.vertex );//world position
 
-                output.wnormals = UnityObjectToWorldNormal ( input.normal );//normal to world normal
+                // output.wnormals = UnityObjectToWorldNormal ( input.normal );//normal to world normal
+output.wnormals = mul(input.normal, (float3x3)unity_WorldToObject);
+// output.wnormals = mul(input.normal, (float3x3)_RotMat);
+// output.wnormals = mul( _RotMat, input.normal );
+
+                
                 // output.color    = float4 ( input.uv, 0, 1 );
                 return output;
             }
@@ -88,7 +95,7 @@ Shader "MAGIC/BoxGI"
             
             //buffer
             sampler2D _Accumulation;        //not used yet - this shader accumulate to
-            sampler2D _Display;             //not used yet - used to read old value
+            sampler2D _Display;             
             
             //lmgb
             sampler2D _Albedo;              //not used - see lmdirect
@@ -97,31 +104,32 @@ Shader "MAGIC/BoxGI"
             sampler2D _Shadowmask;          //not used yet - see lmdirect
 
 
-            float4 traceRay ( float4 sample, float2 octdirection, float3 normalDirection ){
-                //box sample cubemap to get uv
-                //use uv to sample direct lightmap to get illumination
-                float4 direct    = tex2D   ( _LMdirect, sample.rg );
-                //mask sample by skybox mask //the sample would try to get uv invalid on LM
-                       direct   *= 1 - sample.b;
+
+            // float4 traceRay ( float4 sample, float2 octdirection, float3 normalDirection ){
+            //     //box sample cubemap to get uv
+            //     //use uv to sample direct lightmap to get illumination
+            //     float4 direct    = tex2D   ( _LMdirect, sample.rg );
+            //     //mask sample by skybox mask //the sample would try to get uv invalid on LM
+            //            direct   *= 1 - sample.b;
                 
-                //attenuate by distance //and sample cosine? //and fog (how)?
-                //--
-                //resolve sample BRDF //++++ take wnormal at sample
-                //--
+            //     //attenuate by distance //and sample cosine? //and fog (how)?
+            //     //--
+            //     //resolve sample BRDF //++++ take wnormal at sample
+            //     //--
 
-                //sample skybox
-                float4 sky       = tex2D    ( _Skybox, octdirection ); //use the worldnormal to oct
-                //mask skybox by skybox mask //mask part fromdirect light
-                       sky      *= sample.b;
+            //     //sample skybox
+            //     float4 sky       = tex2D    ( _Skybox, octdirection ); //use the worldnormal to oct
+            //     //mask skybox by skybox mask //mask part fromdirect light
+            //            sky      *= sample.b;
 
-                //we gonna use the ambient for now
-                float wrapsky = wrappedTo1(float3(0,1,0), normalDirection);//invoke actual wrap normal
-                _Ambientsky *= sample.b * wrapsky;
-                sky = sky + _Ambientsky;// ?
+            //     //we gonna use the ambient for now
+            //     float wrapsky = wrappedTo1(float3(0,1,0), normalDirection);//invoke actual wrap normal
+            //     _Ambientsky *= sample.b * wrapsky;
+            //     sky = sky + _Ambientsky;// ?
 
-                //return sample + skybox
-                return sky + direct;
-            }
+            //     //return sample + skybox
+            //     return sky + direct;
+            // }
 
             //mesh position to align with grid potentially in vertex clamping using the bounding box
             //pass the size and grid range, compute cell size
@@ -129,13 +137,15 @@ Shader "MAGIC/BoxGI"
             {
                 //set size
                 const float numRays = 64; // set that externally
-                const float  size      = 4;//not const, expose as parameter
+                const float  size   = 4;//not const, expose as parameter
+
 
                 const float2 cuberange = float2 ( 16, 16 );//not const, expose as parameter
                 const float  epsilon   = 0.000001;
 
                 float3 origin       = _Origin.xyz;
                 float3 worldnorm    = normalize ( input.wnormals ) + epsilon;
+                worldnorm = worldnorm.xyz; //worldnorm.x = - worldnorm.x;
                 float3 pos          = input.wpos.xyz;// - origin + 0.001;//why the 0.001 again?
 
                 //hash position to read the right cubemap in the atlas
@@ -143,26 +153,59 @@ Shader "MAGIC/BoxGI"
                 float3 hash_offset  = hashpos * size;
                 // float2 hash_id      = max ( float2 ( 0, 0 ), min ( hashpos.xz, cuberange ) );
                 float2 hash_id      = max ( float2 ( 0, 0 ), min ( hashpos.xy, cuberange ) );
+// return float4(worldnorm.xyz,1);
+// float testdir = ndotl(worldnorm.xyz, float3(0,1,0));
+//return testdir;
 
                 //current Ray direction, passed as paramater
                 float3 ray = normalize ( _Kernel.rgb + worldnorm );
+// float3 ray = worldnorm;
+                float cosineterm = ndotl(worldnorm,ray); 
                 // if ( _Kernel.a == 0 )  { ray = float3( 0.0, 1.0, 0.0 ); }
                 if ( _Kernel.a == 0 )  { ray = float3( 0.0, 0.0, 1.0 ); }
 
-                //box projection of world normal-> ray (why again?)
+                //box projection of world normal
                 float3 cubecenter   = hash_offset + ( size / 2 );
                 float3 mincube      = hash_offset + 0;
                 float3 maxcube      = hash_offset + size;
                 float3 projected    = BoxProjectVector ( pos, ray, cubecenter, mincube, maxcube );
                 
-                //sampling the atlas
+                //data for sampling the atlas
                 float2 octnormal    = ( PackNormalToOct ( projected ) + 1) / 2;
                 float2 samplepos    = ( octnormal + hash_id ) / cuberange;
 
                 //cubemap result //.rg contain UV, .b is skymasking
-                float4 cubesample   = tex2D     ( _Atlas, samplepos );
-                float4 irradiance   = traceRay  ( cubesample, octnormal,worldnorm );
+                float4 raycubesample   = tex2D ( _Atlas, samplepos );
+// return  float4(octnormal,0,1);
+                //sample scene indirectlight with ray
+                float4 indirectlight   = tex2D ( _Display, raycubesample.rg );
+                //use uv to sample direct lightmap to get illumination
+                float4 direct = tex2D   ( _LMdirect, raycubesample.rg );
+                //sample skybox
+                float4 sky = tex2D    ( _Skybox, octnormal ); //use the worldnormal to oct
+                //mask sample by skybox mask //the sample would try to get uv invalid on LM
+                // direct   *= raycubesample.b;
+                
+                //attenuate by distance //and sample cosine? //and fog (how)?
+                //--
+                //resolve sample BRDF //++++ take wnormal at sample
+                //--                
+                //mask skybox by skybox mask //mask part fromdirect light
+                sky *= raycubesample.b;//return raycubesample.b;
 
+                //we gonna use the ambient for now
+                float wrapsky = wrappedTo1(float3(0,1,0), worldnorm);
+                _Ambientsky *= raycubesample.b * wrapsky;
+//return wrapsky;
+                sky += _Ambientsky;// ?
+
+                //get direct light or skybox/skyo occlusion as RGB
+                // float4 irradiance   = traceRay  (_LMdirect, _Skybox, raycubesample, octnormal,worldnorm );
+                float4 irradiance   = sky + direct;
+                irradiance *= cosineterm;
+                //add indirectlight + irradiance
+                irradiance += float4(YCoCgToRgb(indirectlight),1) ;
+                
                 //gi.rgb = traceResult.rgb;
                 //gi.rgb *= 4.3;
                 //gi.rgb += traceResult.a * 1.0 * SEGISkyColor;
@@ -170,20 +213,15 @@ Shader "MAGIC/BoxGI"
 
                 //chromaLum
                 float4 result = float4(RgbToYCoCg(irradiance),1);
-                // result = result.x;
-                //divide by num ray
-                result /= numRays;
+                //divide lum by num ray
+                result.x /= numRays;
                 //turn the Y (lum) into 16bits
                 float4 lum = Float32ToIntrgba(result.x);
-                // float4 lum = (result.x);
                 //encode split lum and chroma
                 result = float4(lum.x,lum.y, result.y,result.z);
-			    //sample accum
-                float4 accum    = tex2D   ( _Display, cubesample.rg );
-			    //accumulation (accum + sample accum) //display materal must reconstruct RGB from chroma lum
-                result += accum;
+
 			    //return 16bit encoding
-                // return 1-result;
+                //display materal must reconstruct RGB from chroma lum
                 return result;
             }
             ENDCG

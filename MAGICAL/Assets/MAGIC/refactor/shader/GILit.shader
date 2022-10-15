@@ -61,14 +61,14 @@
                 // GI = float4(c,1);
 
                 //apply GI to texture
-                color += GI;
+                // color += GI;
 
                 // apply fog
                 // UNITY_APPLY_FOG(input.fogCoord, color);
 
-                // return color;
+                return color;
                 // return GI.a;
-                return 1 - luminance*16;
+                return luminance*16;
             }
             ENDCG
         }

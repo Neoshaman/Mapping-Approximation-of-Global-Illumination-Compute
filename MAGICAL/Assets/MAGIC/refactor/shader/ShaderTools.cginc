@@ -94,6 +94,9 @@ float wrappedExtended(float wrap, float3 normal, float3 light, float power){
     return pow(saturate((dot(normal, light) + wrap) / (1.0f + wrap)), power) * (power + 1) / (2 * (1 + wrap));
 }
 
+float ndotl(float3 norm, float3 light) {return saturate(dot(norm, light));}
+
+
 float4 flatTex2D( sampler2D tex, float4 spos){
 	//screenspace texture projection
 	float2 uv = spos.xy / spos.w;

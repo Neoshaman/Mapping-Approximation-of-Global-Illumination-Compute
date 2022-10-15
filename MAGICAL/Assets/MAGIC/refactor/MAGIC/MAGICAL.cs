@@ -28,9 +28,8 @@ public class MAGICAL //MAGIC applied by lightprobe
     Material directPass;
 	RenderTexture directlight;
 
-
-
 	Matrix4x4 positionMatrix = Matrix4x4.identity;
+
 	
 	//---------------INIT-----------------------------------------------
 	public  void SetGlobalLights (globalLights lights){
@@ -44,59 +43,77 @@ public class MAGICAL //MAGIC applied by lightprobe
 		directPass.SetVector("_MainLight",globalLights.directionalLight);
 		directPass.SetVector("_Origin",origin);
 
-		positionMatrix.SetTRS(
-			new Vector3(32,32,0),		//position
-			// new Vector3(32,0,32),		//position
-			Quaternion.Euler(
-				0,
-				0,
-				0
-			),						//rotation
-			// new Vector3(64,1,64)		//scale
-			new Vector3(100,-100,100)		//scale
-		);
+		// positionMatrix.SetTRS(
+		// 	new Vector3(32,32,0),		//position
+		// 	// new Vector3(32,0,32),		//position
+		// 	Quaternion.Euler(
+		// 		0,
+		// 		0,
+		// 		0
+		// 	),						//rotation
+		// 	// new Vector3(64,1,64)		//scale
+		// 	new Vector3(100,-100,100)		//scale
+		// );
+
+		// passCustomMatrix();
+		
 		directPass.SetMatrix("_PosMat", positionMatrix);
+		//directPass.SetMatrix("_RotMat", positionMatrix);
 		
 		directlight = new RenderTexture(size/2, size/2, 24);//2:128² - 4:64²->light leaks
-        RenderSurface.applyShader(mesh,directlight,directPass);
+		RenderSurface.applyShader(mesh,directlight,directPass, positionMatrix);
 	}
 	
 	
-    private void initGIBuffer (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
+    private void initGIBuffer (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB)
+    {
         GIpass = new Material(GI);
 
         setGlobalLightsToGI();
-        setSceneDataToGI(origin,probes);
+        setSceneDataToGI(origin, probes);
         setGIBufferToGI();
-	    setLMGBToGI(LMGB);
-		
-		positionMatrix.SetTRS(
-			new Vector3(32,32,0),		//position
-			// new Vector3(32,0,32),		//position
-			Quaternion.Euler(
-				0,
-				0,
-				0
-			),						//rotation
-			// new Vector3(64,1,64)		//scale
-			new Vector3(100,-100,100)		//scale
-		);
-		GIpass.SetMatrix("_PosMat", positionMatrix);
+        setLMGBToGI(LMGB);
 
-	    displayBuffer = new RenderTexture(size, size, 24);
-	    accumulationBuffer = new RenderTexture(size, size, 24);
+        // passCustomMatrix();
+        GIpass.SetMatrix("_PosMat", positionMatrix);
+        //GIpass.SetMatrix("_RotMat", rotationMatrix);
+
+        displayBuffer = new RenderTexture(size, size, 24);
+        accumulationBuffer = new RenderTexture(size, size, 24);
         // RenderSurface.setCanvas(displayBuffer,size);
         // RenderSurface.setCanvas(accumulationBuffer,size);
-        RenderSurface.applyShader(mesh,displayBuffer,GIpass);
-        RenderSurface.applyShader(mesh,accumulationBuffer,GIpass);
+	    RenderSurface.applyShader(mesh, displayBuffer, GIpass, positionMatrix);
+	    RenderSurface.applyShader(mesh, accumulationBuffer, GIpass, positionMatrix);
     }
-    public  void InitMAGICAL (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB){
+
+	private void setCustomMatrix(Matrix4x4 matrix)
+    {
+	    matrix.SetTRS(
+                    new Vector3(32, 32, 0),     //position
+                                                // new Vector3(32,0,32),		//position
+                    Quaternion.Euler(
+                        -90,//0,
+                        0,
+                        0
+                    ),                      //rotation
+                                            // new Vector3(64,1,64)		//scale
+                    // new Vector3(100, -100, 100)     //scale
+                    new Vector3(100, 100, 100)     //scale
+                );
+	    positionMatrix = matrix;
+
+	    //rotationMatrix = positionMatrix.transpose;
+	    //rotationMatrix = rotationMatrix.inverse;
+    }
+
+	public void InitMAGICAL (Mesh[] mesh, Vector3 origin, RenderTexture probes, RenderTexture[] LMGB, Matrix4x4 matrix){
         Kernel = new Vector4();
+		setCustomMatrix(matrix);
 	    initDirectLight(mesh,origin,probes);
 	    initGIBuffer(mesh,origin,probes,LMGB);
     }
     
-    
+    // public void matrixinverse(
     
 	void setGlobalLightsToGI(){
 		GIpass.SetTexture("_Skybox", globalLights.sky, UnityEngine.Rendering.RenderTextureSubElement.Default);
@@ -127,7 +144,7 @@ public class MAGICAL //MAGIC applied by lightprobe
 		//directPass.SetTexture("_Atlas", probes, UnityEngine.Rendering.RenderTextureSubElement.Default);
 
 		directPass.SetVector("_MainLight",globalLights.directionalLight);
-        RenderSurface.applyShader(mesh,directlight,directPass);//render direct to texture
+		RenderSurface.applyShader(mesh,directlight,directPass,positionMatrix);//render direct to texture
     }
     
     public  void updateGIBuffer (Mesh[] mesh){
@@ -152,7 +169,7 @@ public class MAGICAL //MAGIC applied by lightprobe
             //send _Kernel.rgb to shader, pass .a = count 
             Kernel = new Vector4(kernel.x,kernel.y,kernel.z,rayCounter);
             GIpass.SetVector("_Kernel",Kernel);
-            RenderSurface.applyShader(mesh,accumulationBuffer,GIpass);
+	    RenderSurface.applyShader(mesh,accumulationBuffer,GIpass, positionMatrix);
 
 	    rayCounter +=1;//each update, generally each frame
             rayCounter %= numSamples;
