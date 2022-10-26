@@ -7,10 +7,7 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 {
 	Mesh[] geometry;
 	public GameObject root;
-	Matrix4x4 positionMatrix = Matrix4x4.identity;
-	//Matrix4x4 rotationMatrix = Matrix4x4.identity;
-	
-	// GameObject debug;//visualizing the output textures from the utils class, quad generated with basic material
+	Material dmat;
     
     globalLights lightdata;
 
@@ -25,7 +22,6 @@ public class GIScene : ScriptableObject //TODO:probably no longer a scriptable, 
 	    GI = new MAGICAL();
 
 		Matrix4x4 positionMatrix = root.transform.localToWorldMatrix;
-Debug.Log(root.transform.localToWorldMatrix);
 	    Vector3 origine = root.gameObject.GetComponent<Renderer>().bounds.min;
         geometry = new Mesh[1];
 	    geometry[0] = root.GetComponent<MeshFilter>().sharedMesh;
@@ -37,13 +33,12 @@ Debug.Log(root.transform.localToWorldMatrix);
 		GIbuffer.initializeLMGB(geometry, positionMatrix);
         GI.SetGlobalLights(globalLights);
 		GI.InitMAGICAL(geometry, origine, UVprobe.atlas, GIbuffer.texture, positionMatrix);
-        //apply light map material to scene
-
-        // Material dmat  = new Material(shader.debugshader);
-		Material dmat  = new Material(shader.GILMLit);
-        // debug = GameObject.CreatePrimitive(PrimitiveType.Quad);
-    	// debug.GetComponent<Renderer>().material = dmat;
+        
+		//apply light map material to scene
+		dmat  = new Material(shader.GILMLit); 
 		root.GetComponent<Renderer>().material = dmat;
+
+		debugQuadShowTex();
     }
 
     public void shaderSetup (shaderIndex getshader)
@@ -61,34 +56,63 @@ Debug.Log(root.transform.localToWorldMatrix);
     }
 
     public void updateLight(){
-	    GI.updateDirectLight(geometry);//TODO:only when change happen, this render and cache direct lighting on a texture
+	    GI.updateDirectLight(geometry);
+		//TODO:only when change happen, this render and cache direct lighting on a texture
 	}
-	public void updateGI(){
-    	GI.updateGIBuffer(geometry);
-
-
-		// Material CanvasFrame = root.GetComponent<MeshRenderer>().material;
-		// CanvasFrame.SetTexture("_GI", GI.returnDisplay());
-		
-		root.GetComponent<MeshRenderer>().material.SetTexture("_GI", GI.returnDisplay());
-    	// RenderSurface.show(root, GI.returnDisplay());
-
-		// dmat.SetTexture("_GI", GI.returnDisplay(), UnityEngine.Rendering.RenderTextureSubElement.Default);
-
-		//if (GI.rayCounter == 0){//we accumulate one ray per frame, when all ray are accumulated one bounce of GI is done
-		//    RenderSurface.show(root, GI.returnDisplay());// update the double buffering of the GI compute
-		//    //Debug.Log(GI.returnDisplay());
-	    //}
-	    
-	    //DEBUG: try to show the raw texture within a utils class into the debug quad,
-	    //to see if its accessible and properly rendered
-	    //RenderSurface.show(debug,UVprobe.atlas);
-	    
-	    //RenderSurface.show(debug,GI.returnDisplay());
-	    //RenderSurface.show(debug,GI.returnAccum());
-	    //RenderSurface.show(debug,GI.returnDirect());
-	    
-	    //RenderSurface.show(debug,GIbuffer.texture[3]);
-	    //Debug.Log(GIbuffer.texture[0]);
+	public void updateGI()
+    {
+        GI.updateGIBuffer(geometry);
     }
+	public void update(){
+		updateLight();
+		updateGI();
+		updateMaterial();
+		// debugShowDirect();
+	}
+
+    private void updateMaterial()
+    {
+    //     Material CanvasFrame = root.GetComponent<MeshRenderer>().material;
+    //     CanvasFrame.SetTexture("_GI", GI.returnDisplay());
+
+        // root.GetComponent<MeshRenderer>().material.SetTexture("_GI", GI.returnDisplay());
+		
+		// dmat.SetTexture("_GI", GI.returnDisplay(), UnityEngine.Rendering.RenderTextureSubElement.Default);
+		// dmat.SetTexture("_GI", GI.returnDisplay());
+
+        // Debug.Log(GI.returnDisplay());
+        
+		RenderSurface.show(root, GI.returnDisplay(), "_GI");// update the double buffering of the GI compute
+
+        // if (GI.rayCounter == 0){//we accumulate one ray per frame, 
+		// // when all ray are accumulated one bounce of GI is done
+        //    RenderSurface.show(root, GI.returnDisplay());// update the double buffering of the GI compute
+        //    //Debug.Log(GI.returnDisplay());
+        // }
+
+
+
+        //DEBUG: try to show the raw texture within a utils class into the debug quad,
+        //to see if its accessible and properly rendered
+        //RenderSurface.show(debug,UVprobe.atlas);
+
+	    // debug.GetComponent<MeshRenderer>().material.SetTexture("_GI", GI.returnDisplay());
+
+        //RenderSurface.show(debug,GI.returnDisplay());
+        //RenderSurface.show(debug,GI.returnAccum());
+
+        //RenderSurface.show(debug,GIbuffer.texture[3]);
+        //Debug.Log(GIbuffer.texture[0]);
+    }
+
+	GameObject debug;//visualizing the output textures from the utils class, quad generated with basic material
+
+	private void debugShowDirect(){
+		RenderSurface.show(root, GI.returnDirect());
+        RenderSurface.show(debug, GI.returnDirect());
+	}
+	private void debugQuadShowTex(){
+        debug = GameObject.CreatePrimitive(PrimitiveType.Quad);
+    	debug.GetComponent<Renderer>().material = dmat;
+	}
 }

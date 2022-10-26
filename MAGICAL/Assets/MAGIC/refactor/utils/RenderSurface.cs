@@ -48,11 +48,11 @@ static class RenderSurface
 		//Material CanvasFrame = frame.GetComponent<Renderer>().material;
 		CanvasFrame.SetTexture(textureName, canvas);
     }
-	public  static void show(GameObject frame, RenderTexture canvas){
+	public  static void show(GameObject frame, RenderTexture canvas, string tex = "_MainTex"){
 		// Material CanvasFrame = frame.GetComponent<MeshRenderer>().sharedMaterial;
 		//Material CanvasFrame = frame.GetComponent<Renderer>().material;
 		// CanvasFrame.SetTexture("_MainTex", canvas);
-		showTexture(frame, canvas, "_MainTex");
+		showTexture(frame, canvas, tex);
 
     }
 	public  static void showATLAS(GameObject frame, RenderTexture canvas){

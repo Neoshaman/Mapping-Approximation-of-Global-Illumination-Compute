@@ -53,22 +53,16 @@
                 // sample the texture
                 fixed4 color = tex2D(_MainTex, input.uv);
                 //sample displayGI texture
-                fixed4 GI = tex2D(_GI, input.uv);
+                fixed4 GI = tex2D(_GI, input.uv);   return GI;
                 
                 //decode GI (16bit -> chromalum -> RGB)
-                float luminance = IntrgbaToFloat32(float4(GI.xy,0,0));
-                float3 c = YCoCgToRgb(float3(luminance,GI.z,GI.w));
-                // GI = float4(c,1);
+                float luminance = IntrgbaToFloat32(float4(GI.xy,0,0));      //return luminance*16;
+                float3 lighting = YCoCgToRgb(float3(luminance,GI.z,GI.w));         return  float4(lighting,1);
 
-                //apply GI to texture
-                // color += GI;
-
-                // apply fog
-                // UNITY_APPLY_FOG(input.fogCoord, color);
-
+                GI = float4(lighting,1);
+                color += GI;
                 return color;
                 // return GI.a;
-                return luminance*16;
             }
             ENDCG
         }

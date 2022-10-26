@@ -88,18 +88,18 @@ public class MAGICAL //MAGIC applied by lightprobe
 
 	private void setCustomMatrix(Matrix4x4 matrix)
     {
-	    matrix.SetTRS(
-                    new Vector3(32, 32, 0),     //position
-                                                // new Vector3(32,0,32),		//position
-                    Quaternion.Euler(
-                        -90,//0,
-                        0,
-                        0
-                    ),                      //rotation
-                                            // new Vector3(64,1,64)		//scale
-                    // new Vector3(100, -100, 100)     //scale
-                    new Vector3(100, 100, 100)     //scale
-                );
+	    // matrix.SetTRS(
+        //             new Vector3(32, 32, 0),     //position
+        //                                         // new Vector3(32,0,32),		//position
+        //             Quaternion.Euler(
+        //                 -90,//0,
+        //                 0,
+        //                 0
+        //             ),                      //rotation
+        //                                     // new Vector3(64,1,64)		//scale
+        //             // new Vector3(100, -100, 100)     //scale
+        //             new Vector3(100, 100, 100)     //scale
+        //         );
 	    positionMatrix = matrix;
 
 	    //rotationMatrix = positionMatrix.transpose;
@@ -165,6 +165,7 @@ public class MAGICAL //MAGIC applied by lightprobe
         		Mathf.Cos(latitude) * Mathf.Sin(longitude),
         		Mathf.Sin(latitude)
 	    );
+		if (rayCounter == 0){	kernel = Vector3.up;}
 			
             //send _Kernel.rgb to shader, pass .a = count 
             Kernel = new Vector4(kernel.x,kernel.y,kernel.z,rayCounter);
@@ -189,24 +190,6 @@ public class MAGICAL //MAGIC applied by lightprobe
         	// Debug.DrawRay(Vector3.zero,kernel*16,Color.red);
 			//traceResult += ConeTrace(voxelOrigin.xyz, kernel.xyz, worldNormal.xyz);
     }
-	//RECAP from shader
-            // sampler2D _Skybox;
-            // float4    _MainLight;
-            // float4    _Ambientsky;
-            // float4    _Ambientcolor;
-
-            // float4    _Origin;
-            // float4    _Kernel;
-            // sampler2D _Atlas;
-            // sampler2D _LMdirect;
-
-            // sampler2D _Accumulation;
-            // sampler2D _Display;
-            
-            // sampler2D _Albedo;
-            // sampler2D _Wnormal;
-            // sampler2D _Wposition;
-            // sampler2D _Shadowmask;
 
 	public RenderTexture returnDisplay(){return displayBuffer;}
 	public RenderTexture returnDirect(){return directlight;}

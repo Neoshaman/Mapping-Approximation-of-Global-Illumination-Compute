@@ -68,8 +68,7 @@ public partial class MAGICManager : MonoBehaviour//probably not a monobehaviavio
         //TODO: select which scene to refresh/init based on logic
 	    foreach (var scene in scenes){
 		   glight.updateLight();
-	       scene.updateLight();//TODO: when light change, refresh
-	       scene.updateGI();
+	       scene.update();//TODO: when light change, refresh
 	       //TODO: eventually position, for example circular grid of scene
         }
     }

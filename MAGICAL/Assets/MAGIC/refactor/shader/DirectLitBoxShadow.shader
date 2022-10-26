@@ -74,12 +74,13 @@ Shader "MAGIC/DirectLitBoxShadow"
 
                 float3 origin       = _Origin.xyz;
                 float3 worldnorm    = normalize(input.wnormals.xyz) + epsilon;
-                float3 pos          = input.wpos.xyz;
+                // float3 pos          = input.wpos.xyz;
+                float3 pos          = input.wpos.xyz - origin + 0.001;//why the 0.001 again?
 
                 //hash position to read the right cubemap in the atlas
                 float3 hashpos      = floor(pos/size); 
                 float3 hash_offset  = hashpos*size;
-                float2 hash_id      = max(float2(0,0), min(hashpos.xy, cuberange));
+                float2 hash_id      = max(float2(0,0), min(hashpos.xz, cuberange));
                
                 //box projection
                 float3 cubecenter   = hash_offset + (size / 2);
@@ -90,7 +91,6 @@ Shader "MAGIC/DirectLitBoxShadow"
                 //sampling the atlas
                 float2 octnormal    = (PackNormalToOct(projected) + 1) / 2;
                 float2 samplepos    = (octnormal + hash_id) / cuberange;
-
                 //cubemap result
                 float4 cubesample   = tex2D     ( _Atlas, samplepos );
                 
@@ -98,7 +98,7 @@ Shader "MAGIC/DirectLitBoxShadow"
                 //light
                 float3 light        = normalize(_MainLight);
                 float  ndotl        = saturate(dot(light.xyz, worldnorm));
-                float  skyocclusion = wrappedTo1(worldnorm,float3(0,0,1));
+                float  skyocclusion = wrappedTo1(worldnorm,float3(0,1,0));
                 float  skybias      = 0.5;
 
 
@@ -115,7 +115,7 @@ Shader "MAGIC/DirectLitBoxShadow"
                 float2 lightdirect  = (PackNormalToOct(light) + 1) / 2;
                 float2 shadowdirect = (lightdirect + hash_id) / cuberange;
 
-                float4 directlight  = tex2Dlod( _Atlas, float4(shadowdirect,0,2));
+                float4 directlight  = tex2Dlod( _Atlas, float4(shadowdirect,0,0));
                 float4 occlufactor  = tex2Dlod( _Atlas, float4(shadowdirect,0,7));
                 float4 occlusion    = (occlufactor.b * skyocclusion)+ skybias * directlight.b;
 
